@@ -1,0 +1,62 @@
+These attributes are part of the volume object created by the get_all_volumes() function
+
+These are accessed something like -
+
+volumes = conn.get_all_volumes(filters={'attachment.instance-id' : instance_id})
+for v in volumes:
+	v.attach_data
+	v.detach
+	v.id
+	v.item
+
+
+
+
+__class__
+__delattr__
+__dict__
+__doc__
+__format__
+__getattribute__
+__hash__
+__init__
+__module__
+__new__
+__reduce__
+__reduce_ex__
+__repr__
+__setattr__
+__sizeof__
+__str__
+__subclasshook__
+__weakref__
+_update
+add_tag
+add_tags
+attach
+attach_data
+attachment_state
+connection
+create_snapshot
+create_time
+delete
+detach
+encrypted
+endElement
+id
+iops
+item
+region
+remove_tag
+remove_tags
+size
+snapshot_id
+snapshots
+startElement
+status
+tags
+type
+update
+volume_state
+zone
+

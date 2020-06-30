@@ -1,0 +1,275 @@
+from __future__ import print_function
+import boto
+import boto.ec2
+from boto.ec2.connection import EC2Connection
+# This is a library file based on the contents of the ec2info.py script
+# The purpose of this is to abstract out the functions used to generate the ec2info report.
+# The aim is to prevent duplication of code by having a central repo for functions already
+# written.
+
+
+# Obtain config info to use for the current connection and return in list object
+def get_config_info(configfile):
+	global REGION,AWSKEYID,AWSSECKEY,OUTPUTFILE,OUTTYPE
+	with open(configfile) as f:
+		lines=f.readlines()
+	REGION=lines[0][7:].rstrip('\n')
+	AWSKEYID=lines[1][9:].rstrip('\n')
+	AWSSECKEY=lines[2][10:].rstrip('\n')
+	OUTPUTFILE=lines[3][11:].rstrip('\n')
+	OUTTYPE=OUTPUTFILE.split(".")[1]
+	f.close()
+	return [REGION,AWSKEYID,AWSSECKEY,OUTPUTFILE,OUTTYPE]
+
+def get_server_designations_by_sg(configfile):
+	global SG_DEVELOPMENT,SG_PREPROD,SG_PRODUCTION
+	with open(configfile) as f:
+		lines=f.readlines()
+	SG_DEVELOPMENT=lines[0][12:].rstrip('\n').split(',')
+	SG_PREPROD=lines[1][8:].rstrip('\n').split(',')
+	SG_PRODUCTION=lines[2][11:].rstrip('\n').split(',')
+	print(SG_DEVELOPMENT)
+	print(SG_PREPROD)
+	print(SG_PRODUCTION)
+	f.close()
+	return [SG_DEVELOPMENT,SG_PREPROD,SG_PRODUCTION]	
+
+# Establish a connection to the specified region and return connection object
+def connect_to_region(region_name,awskeyid,awsseckey):
+	ec2conn = boto.ec2.connect_to_region(region_name,aws_access_key_id=awskeyid,aws_secret_access_key=awsseckey)
+	return ec2conn
+
+# Return a list object of the available regions used by AWS
+def get_available_regions():
+	conn = connect_to_ec2()
+	check_regions = boto.ec2.regions() 
+	available_regions=[]
+	for regionname in check_regions:
+		regsub=str(regionname)[11:]	
+		available_regions.append(regsub)
+	return available_regions		
+
+# Get a list of the instances available via the specified connection object
+# Return list via a list object
+def get_instance_references(conn):
+	reservation=get_reservations(conn)
+	instance_list=get_reservation_detail(reservation)
+	return instance_list
+
+# Get reservation info about the current connection.  This is used by the
+# get_instance_references function.
+def get_reservations(conn):
+	reservation_info=conn.get_all_reservations()
+	return reservation_info
+
+# Get detailed information about the specified reservation info.  This is used
+# by the get_instance_references function to get get the actual infomation about each
+# available instance
+def get_reservation_detail(reservation_info):
+	instance_info=[]	
+	for reservations in reservation_info:
+		instance_info.append(reservations.instances)
+	return instance_info
+
+# The following section defines the functions for retrieving instance information
+
+def get_instance_id(instances):
+	return str(instances[0].id)
+
+def get_instance_pubdns(instances):	
+	return str(instances[0].public_dns_name)
+
+def get_instance_prvdns(instances):			
+	return str(instances[0].private_dns_name)
+
+def get_instance_state(instances):	
+	return str(instances[0].state)
+
+def get_instance_state_code(instances):	
+	return str(instances[0].state_code)
+
+def get_instance_key_name(instances):	
+	return str(instances[0].key_name)
+
+def get_instance_instance_type(instances):	
+	return str(instances[0].instance_type)
+
+def get_instance_launch_time(instances):	
+	return str(instances[0].launch_time)
+
+def get_instance_image_id(instances):	
+	return str(instances[0].image_id)
+
+def get_instance_placement(instances):	
+	return str(instances[0].placement)
+
+def get_instance_place_group(instances):	
+	return str(instances[0].placement_group)
+
+def get_instance_place_tenancy(instances):	
+	return str(instances[0].placement_tenancy)
+
+def get_instance_kernel(instances):	
+	return str(instances[0].kernel)
+
+def get_instance_ramdisk(instances):	
+	return str(instances[0].ramdisk)
+
+def get_instance_arch(instances):	
+	return str(instances[0].architecture)
+
+def get_instance_hyperv(instances):	
+	return str(instances[0].hypervisor)
+
+def get_instance_vtype(instances):	
+	return str(instances[0].virtualization_type)
+
+def get_instance_prodcode(instances):	
+	return str(instances[0].product_codes)
+
+def get_instance_amiindex(instances):	
+	return str(instances[0].ami_launch_index)
+
+def get_instance_monitored(instances):	
+	return str(instances[0].monitored)
+
+def get_instance_spotreqid(instances):	
+	return str(instances[0].spot_instance_request_id)
+
+def get_instance_subnetid(instances):			
+	return str(instances[0].subnet_id)
+
+def get_instance_vpcid(instances):	
+	return str(instances[0].vpc_id)
+
+def get_instance_ipaddr(instances):	
+	return str(instances[0].ip_address)
+
+def get_instance_prvipaddr(instances):	
+	return str(instances[0].private_ip_address)
+
+def get_instance_platform(instances):
+	return str(instances[0].platform)
+
+def get_instance_rootdevname(conn,instances):
+	rootdevname=instances[0].root_device_name
+	blockmaplist=get_instance_blockmap(conn,instances)
+	returnstring="<MISSING>"
+	for bd in blockmaplist.split("), "):
+		bdname, bdid = bd.strip(")").split(" (")
+		if (bdname == rootdevname):
+			returnstring=bd
+	return str(returnstring)
+
+def get_instance_rootdevtype(instances):
+	return str(instances[0].root_device_type)
+
+def get_instance_blockmap(conn,instances):
+	volume_list=conn.get_all_volumes(filters={'attachment.instance-id' : instances[0].id})
+	returnstring=""
+	counter=1
+	for v in volume_list:
+		returnstring += v.attach_data.device + " (" + str(v.id) + ", " + str(v.size) + "GB)"
+		if (counter < len(volume_list)):
+			returnstring += ", "
+		counter += 1
+	return str(returnstring)
+
+def get_instance_state_reason(instances):
+	return str(instances[0].state_reason)
+
+# Security Group Attributes that can be called are as follows -
+# secgroup.id = Security ID
+# secgroup.name = Security Name
+
+def get_instance_secgroup(instances):
+	secgrouplist=""
+	counter=1
+	for secgroup in instances[0].groups:
+		secgrouplist += str(secgroup.name) + " (" + str(secgroup.id) + ")"
+		if (counter < len(instances[0].groups)):
+			secgrouplist += ", "
+		counter += 1
+	return str(secgrouplist)
+
+def get_instance_interfaces(instances):
+	return str(instances[0].interfaces)
+
+def get_instance_ebs_opt(instances):
+	return str(instances[0].ebs_optimized)
+
+def get_instance_profile(instances):
+	return str(instances[0].instance_profile)
+
+# The following code is to retrieve the instance tag info
+# there isn't currently a standard set of tags set so instead we use a 'master list' of
+# all the currently existing tags across all instances and iterate through this to see
+# if a tag is used for the current instance being queried.
+# If it is used an entry is written into the relevant tag column - if not the column field is
+# set to <none>.
+
+def get_instance_tag_info(instances,tagtocheckfor):
+	stringtoreturn=""	
+	for tag_type, tag_value in instances[0].__dict__['tags'].items():
+		if tag_type == tagtocheckfor:				
+			stringtoreturn=tag_value
+	return stringtoreturn
+
+def get_instance_name(instances):
+	if 'Name' in instances[0].__dict__['tags']:
+		returnstring=instances[0].__dict__['tags']['Name']
+	else:
+		returnstring="<none>"
+	return returnstring
+
+def get_instance_name_by_id(conn,instance_id):
+	instance_obj = conn.get_only_instances(instance_ids=[instance_id])
+	returnstring=""
+	if 'Name' in instance_obj[0].__dict__['tags']:
+		returnstring=instance_obj[0].__dict__['tags']['Name']
+	else:
+		returnstring="<none>"
+	return returnstring
+
+
+
+def retrieve_tags_in_csv_format(instances,taglist):
+	counter=1
+	stringtoreturn=""		
+	for knowntag in taglist:
+		stringtoreturn += get_instance_tag_info(instances,knowntag)
+		if (counter < len(taglist)):		
+			stringtoreturn += "|"
+		counter += 1
+	return stringtoreturn
+
+def build_master_tag_list(instance_list):
+	taglist=[]
+	for instances in instance_list:
+		for tag_type, tag_value in instances[0].__dict__['tags'].items():
+			tagexists=False
+			for knowntag in taglist:
+				if tag_type == knowntag:
+					tagexists=True
+			if tagexists == False:
+				taglist.append(tag_type)
+	taglist.sort()
+	return taglist
+
+def list_tags_in_header_format(taglist):
+	counter=1
+	stringtoreturn=""
+	for tag in taglist:
+		stringtoreturn += "[Tag] " + tag
+		if (counter < len(taglist)):
+			stringtoreturn += "|"
+		counter += 1
+	return stringtoreturn
+
+def main():
+	print("This is a header file")
+	get_server_designations_by_sg('config_files/server_categories.txt')
+
+if __name__ == "__main__":
+	main()
+

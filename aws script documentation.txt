@@ -1,0 +1,640 @@
+
+__________________________________________________________________________________________
+
+*******************************     ec2snapshot.py   *************************************
+------------------------------------------------------------------------------------------
+
+create_snapshots_by_instance_id(conn,instance_id):
+--------------------------------------------------
+Description :
+	Creates a snapshot of all the volumes for an instance
+	specified by 'instance_id'.   Once finished an array is returned
+	containing the pointers to the snapshot objects that have just been created.
+
+Input : 
+	conn = ec2 connection object
+	instance_id = text field containing the id of an instance
+Output :
+	returns an array containing snapshot objects 
+	(one snapshot created for every volume attached to the specified 
+	instance)
+	
+
+create_snapshot_by_volume_id(conn,volume_id):
+---------------------------------------------
+Description :
+	Creates a snapshot of a specific volume, as specified by 'volume id'.
+	Once created the id of the new snapshot is returned back as a text string.
+Input : 
+	conn = ec2 connection object
+	volume_id = text field containing the id of a volume
+Output :
+	returns a string containing the id number for the snapshot created
+
+get_snapshot_info_by_volume_id(conn,volume_id):
+------------------------------------------------
+Description :
+	Gets the details about snapshots that have been taken of the specified volume.
+	If there are no snapshots available for the volume, <None> will be outputted.
+	This returns information about the volume id, snapshot id, & creation date/time
+Input : 
+	conn = ec2 connection object
+	volume_id = text field containing the id of a volume
+Output : 
+	returns an array containing the following fields -
+	<volume id>,<snapshot id>,<snapshot creation date>,<snapshot creation time>
+	This array is sorted by volume id, then by creation date, then creation time
+
+get_snapshot_info_by_instance_id(conn,instance_id):
+---------------------------------------------------
+Description :
+	Gets the details about snapshots taken of a specified instances volumes.
+	For every volume attached to the specified instance, information about the
+	snapshot id and creation date/time will be returned back.  If there is more
+	than one snapshot found for a volume all of them will be returned back.
+Input :
+	conn = ec2 connection object
+	instance_id = text field containing the id of an instance
+Output : 
+	returns an array containing the following fields -
+	<instance name>,<instance id>,<volume id>,<snapshot id>,<snapshot creation date>,<snapshot creation time>
+
+
+get_latest_snapshot_info_by_instance_id(conn,instance_id,displaytype="all"):
+--------------------------------------------------------------------------
+Description :
+	Gets the details about snapshots taken of a specified instances volumes.
+	For every volume attached to the specified instance, information about the
+	snapshot id and creation date/time will be returned back.  If there is more
+	than one snapshot found for a volume, only the latest will be returned back.
+	
+Input :
+	conn = ec2 connection object
+	instance_id = text field containing the id of an instance
+	displaytype = text field to be set to either 'all/exists' - if 'exists' is 
+			specified then only those instances with snapshots present will
+			be used. all others will be skipped.  If left blank, it defaults
+			to all.  If 'all' is specified then a record will be outputted
+			for each instance whether or not it has a snapshot - if there's
+			no snapshot found then 'None' is outputted.
+
+Output : 
+	Returns an array containing the following fields -
+	<instance name>,<instance id>,<volume id>,<snapshot id>,<snapshot creation date>,<snapshot creation time>	
+	
+
+
+get_full_snapshot_info_by_instance_id(conn,instance_id,displaytype="all"):
+------------------------------------------------------------------------
+Description :
+	Gets the details about snapshots taken of a specified instances volumes.
+	For every volume attached to the specified instance, information about the
+	snapshot id and creation date/time will be returned back.  If there is more
+	than one snapshot found for a volume all of them will be returned back.
+
+Input :
+	conn = ec2 connection object
+	instance_id = text field containing the id of an instance
+	displaytype = text field to be set to either 'all/exists' - if 'exists' is 
+			specified then only those instances with snapshots present will
+			be used. all others will be skipped.  If left blank, it defaults
+			to all.  If 'all' is specified then a record will be outputted
+			for each instance whether or not it has a snapshot - if there's
+			no snapshot found then 'None' is outputted.    If 'None' is 
+			specified then only those instances that do not have a snapshot
+			present will be outputted.
+
+Output :
+	Returns an array containing the following fields -
+	<instance name>,<instance id>,<volume id>,<snapshot id>,<snapshot creation date>,<snapshot creation time>
+	
+
+list_instances_and_snapshot_info(conn,displaytype="latest"):
+---------------------------------------------------
+Description : 
+	Used to get snapshot information about all available instances.  If "latest"
+	is specified, then only the latest snapshots are reported for each instance.
+	Otherwise if full is specified then all snapshot information is reported.	
+
+Input :
+	conn = ec2 connection object
+	displaytype = text field used to determine what snapshot info to be
+		displayed; 'latest' specifies just the latest snapshot record,
+		whereas 'full' specifies that every snapshot for each instance
+		should be outputted.
+Output:
+	Outputs a string delimited by '|' containing the following fields -
+	<instance name>,<instance id>,<volume id>,<snapshot id>,<snapshot creation date>,<snapshot creation time>	
+
+
+get_list_of_all_instance_ids(conn):
+--------------------------------------
+Description : Produces a list of the ids of all the available instances.
+
+Input :
+	conn = ec2 connection object
+Output :
+	Outputs an array containing textstrings of all the available instance ids.
+
+__________________________________________________________________________________________
+
+*******************************     ec2utils.py   ****************************************
+------------------------------------------------------------------------------------------
+
+
+get_config_info(configfile):
+---------------------------
+Description : 
+	Reads connection details (region, awskeyid,awsseckey,output file for the 
+		excel report file) from the specified configuration file, and 
+		returns this back to the calling program.
+
+Input :	
+	configfile = text file containing configuration information.  This will be
+		in the format of -
+		REGION=eu-west-1
+		AWSKEYID=abcdef12345
+		AWSSECKEY=123abc123abc
+		OUTPUTFILE=excelfile.xls
+Output : 
+	Outputs an array containing the details set in the configuration file.  
+		The fields of this array are as follows - 	
+		<region>,<awskeyid>,<awsseckey>,<outputfile>,<outputtype>
+
+get_server_designations_by_sg(configfile):
+------------------------------------------
+Description :
+	Reads details about what security groups belong to what server designations (development,
+	pre-production,production) from a config file. 
+Input :
+	configfile = text file containing configuration information.  This will be in the format of 
+		DEVELOPMENT=sg12345,sg4343434,sg90190190
+		PREPROD=sg12345,sg4343434,sg90190190
+		PRODUCTION=sg12345,sg4343434,sg90190190
+Output :
+	Outputs an array of arrays - first array contains security groups in development, second array
+	contains those in pre-prod, and the last those security groups in production.
+	i.e. 
+		output_array=get_server_designations_by_sg('somefile')
+		output_array[0]=[sg1234,sg4567,sg7654] # development sg groups
+		output_array[1]=[sg8765,sg2654,sg1212] # pre-prod sg groups
+		output_array[2]=[sg9876,sg7654,sg4321] # production sg groups	
+
+connect_to_region(region_name,awskeyid,awsseckey):
+--------------------------------------------------
+Description :
+	Establishes a connection to AWS EC2 and returns a connection object
+Input : 
+	region_name = the name of the AWS region to connect to (i.e. eu-west-1)
+	awskeyid = AWS Key id
+	awsseckey = AWS Secret Key
+Output :
+	Output an EC2 connection object	
+
+
+get_available_regions():
+------------------------
+Description : 
+	Gets a current list of the available AWS regions
+Input : 
+	None
+Output :
+	Outputs an array containing the available AWS regions as
+		textstrings.
+
+
+get_instance_references(conn):
+------------------------------
+Description :
+	Get a list of the instances available through the specified connection
+	object and return their object references.
+Input : 
+	EC2 Connection object
+Output :
+	An array containing instance objects for all the instances available 
+	through the specified connection
+
+
+get_reservations(conn):
+-----------------------
+Description :
+	Returns reservation information for all available reservations
+	via the current ec2 connection.  The returned reservation array 
+	contains objects used to get the available instance objects, 
+	as they are a subset of the reservation objects.
+Input :
+	EC2 connection object
+Output :
+	Outputs an array containing reservation objects that are found via
+	the specified object reference.
+
+
+get_reservation_detail(reservation_info):
+-----------------------------------------
+Description :
+	Takes an array of reservations, cycles through them and
+	outputs the instance references that are a subset of each of them.
+	This is used to get a list of instance objects from a specified list
+	of reservation objects.
+Input :
+	reservation_info = an array of reservation objects
+Output :
+	An array of instance objects.
+
+get_instance_id(instances):
+---------------------------
+Description :
+	Takes an instance object and returns it's id in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance id
+
+
+get_instance_pubdns(instances):	
+-------------------------------
+Description :
+	Takes an instance object and returns it's public dns record in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance public dns record
+
+get_instance_prvdns(instances):			
+-------------------------------
+Description :
+	Takes an instance object and returns it's private dns record in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance private dns record
+
+get_instance_state(instances):	
+------------------------------
+Description :
+	Takes an instance object and returns it's state in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance state
+
+get_instance_state_code(instances):	
+-----------------------------------
+Description :
+	Takes an instance object and returns it's state code in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance state code
+
+get_instance_key_name(instances):	
+---------------------------------
+Description :
+	Takes an instance object and returns it's key name in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance string format
+
+get_instance_instance_type(instances):	
+--------------------------------------
+Description :
+	Takes an instance object and returns it's instance type in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance type
+
+get_instance_launch_time(instances):	
+------------------------------------
+Description :
+	Takes an instance object and returns it's launch time in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance launch time
+
+get_instance_image_id(instances):	
+---------------------------------
+Description :
+	Takes an instance object and returns it's image id in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance id
+
+get_instance_placement(instances):	
+----------------------------------
+Description :
+	Takes an instance object and returns it's placement in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance placement
+
+get_instance_place_group(instances):	
+------------------------------------
+Description :
+	Takes an instance object and returns it's placement group in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance placement group
+
+get_instance_place_tenancy(instances):	
+--------------------------------------
+Description :
+	Takes an instance object and returns it's placement tenancy in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance placement tenancy
+
+get_instance_kernel(instances):	
+-------------------------------
+Description :
+	Takes an instance object and returns it's kernel in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance kernel
+
+get_instance_ramdisk(instances):	
+--------------------------------
+Description :
+	Takes an instance object and returns it's ramdisk in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance ramdisk
+
+get_instance_arch(instances):	
+------------------------------
+Description :
+	Takes an instance object and returns it's archictecture in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance architecture
+
+get_instance_hyperv(instances):	
+--------------------------------
+Description :
+	Takes an instance object and returns it's hypervisor in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance hypervisor
+
+get_instance_vtype(instances):	
+------------------------------
+Description :
+	Takes an instance object and returns it's virtualization type in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance virtualization type
+
+
+get_instance_prodcode(instances):	
+----------------------------------
+Description :
+	Takes an instance object and returns it's product code in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance product code
+
+
+get_instance_amiindex(instances):	
+---------------------------------
+Description :
+	Takes an instance object and returns it's AMI Index in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance AMI Index
+
+
+get_instance_monitored(instances):	
+----------------------------------
+Description :
+	Takes an instance object and returns it's monitored state in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance monitored state
+
+
+get_instance_spotreqid(instances):	
+----------------------------------
+Description :
+	Takes an instance object and returns it's spot required id in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the spot required id
+
+get_instance_subnetid(instances):			
+---------------------------------
+Description :
+	Takes an instance object and returns it's subnet id in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance subnet id
+
+get_instance_vpcid(instances):	
+------------------------------
+Description :
+	Takes an instance object and returns it's VPC id in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance VPC id
+
+get_instance_ipaddr(instances):	
+-------------------------------
+Description :
+	Takes an instance object and returns it's ip address in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance ip address
+
+get_instance_prvipaddr(instances):	
+----------------------------------
+Description :
+	Takes an instance object and returns it's private ip address in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the private ip address
+
+
+get_instance_platform(instances):
+---------------------------------
+Description :
+	Takes an instance object and returns it's platform type in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance platform type
+
+get_instance_rootdevname(conn,instances):
+-----------------------------------------
+Description :
+	Takes an instance object & its connection string and obtains details about
+	the instances Root block map device.  If one isn't found <Missing> is reported
+	instead.
+Input :
+	conn = EC2 connection object
+	instances = instance object
+Output :
+	returns a string containg the name of the root device along with its volume id and
+	size in GB.   The format of this output is -  /dev/sda1 (vol-a1b2c3d4e5f6, 8GB) 
+
+
+get_instance_rootdevtype(instances):
+------------------------------------
+Description :
+	Takes an instance object and returns it's root device type in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance root device type
+
+get_instance_blockmap(conn,instances):
+--------------------------------------
+Description :
+	Takes an instance object & its connection string and obtains details about
+	the instances block map devices.  Multiple devices are separated by a comma.
+Input :
+	conn = EC2 connection object
+	instances = instance object
+Output :
+	returns a string containg the name of the block map devices along with thier volume id and
+	size in GB.   The format of this output is -  
+	/dev/sda1 (vol-a1b2c3d4e5f6, 8GB),/dev/sda2 (vol-z9x8c7v7b6b5, 10GB) 
+
+
+get_instance_state_reason(instances):
+-------------------------------------
+Description :
+	Takes an instance object and returns it's instance state type in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance state type
+
+get_instance_secgroup(instances):
+---------------------------------
+Description :
+	Takes an instance object and lists the names of all security groups its a member of, 
+	along with their security id.  This is in the format of : SG-somegroup (sg-a1b2c3d4e5).
+	Multiple groups are separated by a comma.
+Input :
+	instances = instance object
+Output :
+	String containing the security group details for that instance.
+
+
+get_instance_interfaces(instances):
+-----------------------------------
+Description :
+	Takes an instance object and returns it's interfaces in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance interfaces
+
+get_instance_ebs_opt(instances):
+--------------------------------
+Description :
+	Takes an instance object and returns it's EBS optimized setting in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the EBS optimized setting
+
+
+get_instance_profile(instances):
+--------------------------------
+Description :
+	Takes an instance object and returns it's instance profile setting in string format
+Input :
+	instances = an instance object
+Output :
+	string containing the instance profile setting
+
+
+get_instance_tag_info(instances,tagtocheckfor):
+-----------------------------------------------
+Description :
+	Returns the value of a specified tag, for the specified instance.
+Input :
+	instances = an instance object
+Output :
+	string containing the value of the specified tag.  If there is no value then
+	a blank string is returned.
+
+get_instance_name(instances):
+-----------------------------
+Description :
+	Returns the value of the 'Name' tag for a specified instance object
+	If this doesn't exist then the value <None> is returned instead.
+Input :
+	instances = an instance object
+Output :
+	A string containing the value of the 'Name' tag for the specified instance object
+
+get_instance_name_by_id(conn,instance_id):
+------------------------------------------
+Description :
+	Returns the value of the 'Name' tag for a specified instance id
+	If this doesn't exist then the value <None> is returned instead.
+Input :
+	instances = an instance id in string format
+Output :
+	A string containing the value of the 'Name' tag for the specified instance object
+
+retrieve_tags_in_csv_format(instances,taglist):
+-----------------------------------------------
+Description :
+	Takes a list of master tags and uses this to compare against the tags set against
+	the specified instance object.   If a tag in the master tag list isn't set against
+	the instance object, then a blank value will be written.   This is needed to ensure the
+	columns are consistent between each instance check.
+Input :
+	instances = instance object
+	taglist = an array containing all the tags to check for (columns used in csv file for tags)
+Output :
+	string containing details of tags for the specified instance object, separated by '|'
+	delimiter.   If a particular tag doesn't exist then a blank entry is made for it (to keep
+	the csv columns aligned).
+
+
+build_master_tag_list(instance_list):
+-------------------------------------
+Description :
+	Takes an array of instance objects and cycles through this to identify all possible tag names
+	that can be used.  This master list of tags is outputed into an array with a unique record
+	for each tag(no duplicates).
+Input :
+	instance_list = an array of instance objects.
+Output :
+	an array of strings containing unique 'tag' names.
+
+
+list_tags_in_header_format(taglist):
+------------------------------------
+Description :
+	This takes the master tag list generated by the "build_master_tag_list" function and outputs
+	it as a reformatted string.   All tags are prefixed with the '[Tag] ' string and are separated
+	by a '|' delimiter.   This is designed to be used when constructing a csv header file.
+Input :
+	taglist : an array containing the names of all possible tags that will be used
+Output :
+	A string of all possible tags, prefixed with '[Tag] ' and seperated by the '|' symbol.
+
+

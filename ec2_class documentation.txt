@@ -1,0 +1,65 @@
+	Ec2Utils.conn = connection object for class
+	Ec2Utils.available_regions = array of available regions
+	Ec2Utils.reservations = array of reservation objects 
+	Ec2Utils.instance_objects = array of all instance objects available
+	Ec2Utils.snapshot_objects = array of all snapshot objects available
+	Ec2Utils.volume_objects = array of all volume objects available
+	Ec2Utils.volume_details = [<volume id>,<volume object>,<volume block device>,<instance id>,<instance obj>]
+	Ec2Utils.snapshot_details = [<snapshot id>,<snapshot object>,<volume id>,<volume object>,<instance id>,<instance obj>]
+	Ec2Utils.instance_details = [<instance id>,<instance name>,<instance object>,<launchdate>,<launchtime>,<createdate>,<createtime>,<stopdate>,<stoptime>,<root dev name>,<root dev id>]
+
+.update() 				-	Refreshes EC2 Instance & Snapshot Info
+
+Methods for outputting instance attributes as formatting string
+---------------------------------------------------------------
+
+.get_instance_id(instance)		-	id for instance object
+.get_instance_prvdns(instance)		-	private dns value for instance object
+.get_instance_state(instance)		-	instance state
+.get_instance_state_code(instance)	-	instance state code
+.get_instance_key_name(instance)	-	instance key name
+.get_instance_type(instance)		-	instance type
+.get_instance_launch_time(instance)	-	instance launch time
+.get_instance_image_id(instance)	-	instance image id
+.get_instance_placement(instance)	-	instance placement
+.get_instance_place_group(instance)	-	instance placement group
+.get_instance_place_tenancy(instance)	-	instance placement tenancy
+.get_instance_kernel(instance)		-	instance kernel
+.get_instance_ramdisk(instance)		-	instance ramdisk
+.get_instance_arch(instance)		-	instance architecture
+.get_instance_hyperv(instance)		-	instance hypervisor
+.get_instance_vtype(instance)		-	instance virtualization type
+.get_instance_prodcode(instance)	-	instance product code
+.get_instance_amiindex(instance)	-	instance ami index
+.get_instance_monitored(instance)	-	instance monitored status
+.get_instance_spotreqid(instance)	-	instance spot required id
+.get_instance_subnetid(instance)	-	instance subnet id
+.get_instance_vpcid(instance)		-	instance VPC id
+.get_instance_ipaddr(instance)		-	instance public IP address
+.get_instance_prvipaddr(instance)	-	instance private IP address
+.get_instance_platform(instance)	-	instance platform
+.get_instance_state_reason(instance)	-	instance state reason
+.get_instance_interfaces(instance)	-	instance interfaces
+.get_instance_ebs_opt(instance)		-	instance ebs optimized setting
+.get_instance_profile(instance)		-	instance profile information
+.get_instance_rootdevtype(instance)	-	instance root device type
+
+Customized instance attribute methods for returning output as formatted string
+---------------------------------------------------------------------------------
+
+.get_instance_rootdevname(instance)		-	instances root device name formatted with size[GB]
+							in brackets
+.get_instance_blockmap(instance)		-	instances block map device names separated by commas
+							with size[GB] in brackets
+.get_instance_launch_datetime(instance)		-	instances launch(startup) date & time in UK format
+							DD:MM:YY HH:MM:SS
+.get_instance_creation_datetime(instance)	-	instances creation date & time in UK format
+							DD:MM:YY HH:MM:SS.  This is based off the root device
+							creation time
+.get_instance_stop_datetime(instance)		-	Date/time the instance was stopped if applicable, in UK format
+							DD:MM:YY HH:MM:SS
+
+							
+
+
+

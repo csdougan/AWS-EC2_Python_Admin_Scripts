@@ -1,0 +1,12 @@
+import boto.ec2
+conn = boto.ec2.connect_to_region("eu-west-1")
+reservations = conn.get_all_instances()
+for r in reservations:
+    for i in r.instances:
+        if i.state == 'stopped':
+            print "%s [%s] %s" % (i.id, i.state, i.reason)
+
+
+Output:
+
+i-11223344 [stopped] User initiated (2013-12-20 13:59:08 GMT)

@@ -1,0 +1,21 @@
+
+RETENTION_VALUE=7
+
+
+1. Get a list of instances in current designation (i.e. development/pre-prod/production)
+2. Go through each instance and get a list of its volumes
+3. For each volume get a list of its snapshots
+4. Create snapshot for volume
+5. Get the total number of snapshots present for each volume
+6. if the total number of snapshots is greater than the retention value, then
+	number of snapshots to delete = total number of snapshots - retention value
+7. for (number of snapshot to delete) times, repeat the following
+		get oldest snapshot (by date/time) id
+		delete oldest snapshot
+8. Produce report of the snapshots created.
+9. Produce report of any snapshots deleted.
+
+
+
+
+
